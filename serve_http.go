@@ -63,10 +63,18 @@ func (r *Disolver) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if clientIPHeaderName != "" {
-			clientIP, _, _ = net.SplitHostPort(req.Header.Get(clientIPHeaderName))
+			rawIP := req.Header.Get(clientIPHeaderName)
+			var err error
+			clientIP, _, err = net.SplitHostPort(rawIP)
+			if err != nil {
+				clientIP = rawIP
+			}
 		}
-		req.Header.Set(xForwardFor, clientIP)
-		req.Header.Set(xRealIP, clientIP)
+
+		if clientIP != "" {
+			req.Header.Set(xForwardFor, clientIP)
+			req.Header.Set(xRealIP, clientIP)
+		}
 	} else {
 		switch r.provider {
 		case providers.Cloudflare:
